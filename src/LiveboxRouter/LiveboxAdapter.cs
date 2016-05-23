@@ -134,6 +134,29 @@ namespace Orange.Livebox
 
         #region Manipulate Firewall levels
 
+        public Task<StringResult> GetFirewallLevel()
+        {
+            return Task.FromResult(CoreGetFirewallLevel());
+        }
+
+        private StringResult CoreGetFirewallLevel()
+        {
+            try
+            {
+                var uri = new Uri(Origin + "/sysbus/Firewall:getFirewallLevel");
+                var request = CreateRequest(uri, "{\"parameters\":{}}");
+                using (var response = (HttpWebResponse)request.GetResponse())
+                {
+                    return ReadJsonFromResponse<StringResult>(response);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.Print(ex.ToString());
+                throw;
+            }
+        }
+
         public Task<SimpleResult> SetFirewallToMedium()
         {
             return Task.FromResult(SetFirewallLevel("Medium"));

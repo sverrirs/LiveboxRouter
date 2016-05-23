@@ -19,6 +19,20 @@ The following features have been implemented:
 Todo:
 * Set Firewall custom rules (create new IP blocking rules)
 
+# Functionality
+The test application that comes with the `LiveboxAdapter.cs` class (which is the main library file) is very simple.
+After typing in the username and password to your router you can press connect to verify that the application can connect to your LAN router. After the first time this is done the application will establish the connection automatically when started.
+
+The app will indicate the current status of your router's firewall to indicate if the DNS block is in place or not. 
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/sverrirs/LiveboxRouter/master/src/LiveboxRouter/img/screenshot01.png" />
+</p>
+
+You can then simply click the Enable block or disable block button to apply the necessary settings to your router.
+
+_Note: Currently the app only either applies the normal or custom firewall settings when the buttons are pressed. You can set up your custom rules by hand and then this will work for the time being. In the future I will add functionality to automatically create all the DNS blocking entries based on your DNS provider settings._
+
 # Examples
 To obtain information about the device
 

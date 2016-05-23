@@ -15,5 +15,9 @@ namespace Orange.Livebox.json
     {
     }
 
-    
+
+    [JsonObject(MemberSerialization.OptIn)]
+    public class StringResult : LiveboxResult<string>
+    {
+    }
 }
