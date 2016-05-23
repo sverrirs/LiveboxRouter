@@ -69,12 +69,16 @@ namespace Orange.Livebox
                     request.Headers.Add("X-Prototype-Version", "1.7");
                     request.Headers.Add("X-Requested-With", "XMLHttpRequest");
 
-                    request.CookieContainer.Add(new Cookie("25200fcf/accept-language", "en", "/", uri.Host));
+                    request.CookieContainer.Add(new Cookie("25200fcf/accept-language", WebUtility.UrlEncode("en,en-US"), "/", uri.Host));
                     request.CookieContainer.Add(new Cookie("25200fcf/zoom-accessibility", "small", "/", uri.Host));
                     request.CookieContainer.Add(new Cookie("25200fcf/contrast-accessibility", "contrast1", "/", uri.Host));
                     request.CookieContainer.Add(new Cookie("25200fcf/language", "en", "/", uri.Host));
-                    request.CookieContainer.Add(new Cookie("25200fcf/possibleLanguages", "en", "/", uri.Host));
+                    request.CookieContainer.Add(new Cookie("25200fcf/possibleLanguages", WebUtility.UrlEncode("en,fr"), "/", uri.Host));
                     request.CookieContainer.Add(new Cookie("25200fcf/expirydate", DateTime.Now.AddMinutes(10).ToString("ddd MMM dd yyyy HH:mm:ss") + " GMT+0200 (Romance Daylight Time)", "/", uri.Host));
+
+                    request.CookieContainer.Add(new Cookie("25200fcf/WanInterfaceConfig", "DSL", "/", uri.Host));
+
+
 
                     using (var response = (HttpWebResponse) request.GetResponse())
                     {
@@ -100,7 +104,35 @@ namespace Orange.Livebox
 
         #endregion
 
-        #region Manipulate Firewall settings and rules
+        #region Get Device Info
+
+        public Task<DeviceInfoResult> GetDeviceInfo()
+        {
+            return Task.FromResult(CoreGetDeviceInfo());
+        }
+
+        private DeviceInfoResult CoreGetDeviceInfo()
+        {
+            try
+            {
+                var uri = new Uri(Origin + "/sysbus/DeviceInfo?_restDepth=-1");
+                var request = CreateRequest(uri, requestMethod: WebRequestMethods.Http.Get, omitContentType:true);
+                using (var response = (HttpWebResponse)request.GetResponse())
+                {
+                    return ReadJsonFromResponse<DeviceInfoResult>(response);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.Print(ex.ToString());
+                throw;
+            }
+        }
+
+        #endregion
+
+
+        #region Manipulate Firewall levels
 
         public Task<SimpleResult> SetFirewallToMedium()
         {
@@ -121,7 +153,7 @@ namespace Orange.Livebox
                 using (var response = (HttpWebResponse) requestIp6.GetResponse())
                 {
                     var result = ReadJsonFromResponse<SimpleResult>(response);
-                    if (!result.Success.GetValueOrDefault())
+                    if (!result.Status.GetValueOrDefault())
                         return result;
                     //throw new ArgumentException("Could not set firewall ipv6 level, aborting");
                 }
@@ -141,7 +173,40 @@ namespace Orange.Livebox
         }
 
         #endregion
-        
+
+        #region Manipulate Firewall custom rules
+
+        public Task<FirewallRule[]> GetFirewallCustomRules()
+        {
+            return Task.FromResult(CoreGetFirewallCustomRules());
+        }
+
+        private FirewallRule[] CoreGetFirewallCustomRules()
+        {
+            try
+            {
+                var uri = new Uri(Origin + "/sysbus/Firewall:getCustomRule");
+                var request = CreateRequest(uri, "{\"parameters\":{\"chain\":\"Custom\"}}");
+                //{"parameters":{"chain":"Custom_V6In"}}
+                using (var response = (HttpWebResponse)request.GetResponse())
+                {
+                    var result = ReadJsonFromResponse<FirewallRuleResults>(response);
+                    if (result != null)
+                        return result.Status.Values.ToArray();
+                }
+                return new FirewallRule[0];
+            }
+            catch (Exception ex)
+            {
+                Debug.Print(ex.ToString());
+                throw;
+            }
+        }
+
+        #endregion
+
+        #region Get the status of the network
+
         public Task<WANData> GetNetworkStatus()
         {
             return Task.FromResult(CoreGetNetworkStatus());
@@ -153,11 +218,11 @@ namespace Orange.Livebox
             {
                 var uri = new Uri(Origin + "/sysbus/NMC:getWANStatus");
                 var request = CreateRequest(uri, "{\"parameters\":{}}");
-                using (var response = (HttpWebResponse)request.GetResponse())
+                using (var response = (HttpWebResponse) request.GetResponse())
                 {
 
                     var result = ReadJsonFromResponse<WANStatus>(response);
-                    if (result.Success.GetValueOrDefault())
+                    if (result.Status.GetValueOrDefault())
                         return result.Data;
                 }
                 return null;
@@ -169,19 +234,29 @@ namespace Orange.Livebox
             }
         }
 
-        private HttpWebRequest CreateRequest(Uri uri, string content = null)
+        #endregion
+
+        #region Utilitie functions
+
+        private HttpWebRequest CreateRequest(Uri uri, string content = null, bool omitContentType = false, string requestMethod = WebRequestMethods.Http.Post)
         {
-            var request = (HttpWebRequest)WebRequest.Create(uri);
+            var request = (HttpWebRequest) WebRequest.Create(uri);
 
             request.CachePolicy = new HttpRequestCachePolicy(HttpRequestCacheLevel.NoCacheNoStore);
             request.CookieContainer = _cookieJar;
-            request.Method = WebRequestMethods.Http.Post;
-            request.ContentType = "application/x-sah-ws-1-call+json; charset=UTF-8";
+            request.Method = requestMethod;
+            if( !omitContentType )
+                request.ContentType = "application/x-sah-ws-1-call+json; charset=UTF-8";
             request.Accept = "text/javascript";
             request.KeepAlive = true;
             request.Headers.Add("X-Context", _loginResult.Data.ContextID);
             request.Headers.Add("X-Prototype-Version", "1.7");
+            request.Headers.Add("X-Sah-Request-Type", "idle");
             request.Headers.Add("X-Requested-With", "XMLHttpRequest");
+
+            request.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36";
+
+            request.ReadWriteTimeout = request.Timeout = 30000;
 
             // Write the Post content if there is one supplied
             if (content != null)
@@ -196,126 +271,6 @@ namespace Orange.Livebox
             }
 
             return request;
-        }
-
-        private Socket ConnectSocket(Uri uri)
-        {
-            // Detect the correct port based on the protocol scheme
-            int port = uri.Scheme.StartsWith("https", StringComparison.OrdinalIgnoreCase) ? 443 : 80;
-
-            IPHostEntry hostEntry;
-            Socket clientSocket = null;
-
-            // Resolve the server name
-            try
-            {
-                hostEntry = Dns.GetHostEntry(uri.Host);
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-
-            // Attempt to connect on each address returned from DNS. Break out once successfully connected
-            foreach (IPAddress address in hostEntry.AddressList)
-            {
-                try
-                {
-                    clientSocket = new Socket(address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                    var remoteEndPoint = new IPEndPoint(address, port);
-                    clientSocket.Connect(remoteEndPoint);
-                    break;
-                }
-                catch (SocketException ex)
-                {
-                    return null;
-                }
-            }
-
-            return clientSocket;
-        }
-
-        private StringBuilder PerformPost(Uri uri, Socket clientSocket, CookieContainer cookieContainer,
-            string content = null, bool formSubmission = false)
-        {
-            // Create the cookie string if there is one
-            string cookies = "";
-            if (cookieContainer != null && cookieContainer.Count > 0)
-            {
-                cookies = "\r\nCookie: ";
-                foreach (Cookie cookie in GetAllCookies(cookieContainer))
-                {
-                    cookies += cookie.Name + "=" + cookie.Value + "; ";
-                }
-            }
-
-            // Format the HTTP GET request string
-            string getRequest = "POST " + uri.PathAndQuery + " HTTP/1.1\r\nHost: " + uri.Host + "\r\nConnection: keep-alive\r\n";
-            getRequest += "Content-Length: "+ (content?.Length ?? 0)+ "\r\n";
-            getRequest += "Pragma: no-cache\r\nCache-Control: no-cache\r\n";
-            getRequest += "Origin: http://"+ uri.Host + "\r\n";
-            getRequest += "User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36\r\n";
-            if (_loginResult != null)
-                getRequest += "X-Context: " + _loginResult.Data.ContextID + "\r\n";
-
-            if( !formSubmission)
-                getRequest += "Content-type: application/x-sah-ws-1-call+json; charset=UTF-8\r\n";
-            else
-                getRequest += "Content-type: application/x-www-form-urlencoded; charset=UTF-8\r\n";
-
-            getRequest += "Accept: text/javascript\r\nX-Prototype-Version: 1.7\r\nX-Requested-With: XMLHttpRequest\r\n";
-            getRequest += cookies + "\r\n\r\n";
-
-            if (content != null)
-                getRequest += content;
-
-            var getBuffer = Encoding.ASCII.GetBytes(getRequest);
-
-            // Send the GET request to the connected server
-            clientSocket.Send(getBuffer);
-
-            // Create a buffer that is used to read the response
-            byte[] responseData = new byte[1024];
-
-            // Read the response and save the ASCII data in a string
-            int bytesRead = clientSocket.Receive(responseData);
-
-            var responseString = new StringBuilder();
-            while (bytesRead != 0)
-            {
-                responseString.Append(Encoding.ASCII.GetChars(responseData), 0, bytesRead);
-                bytesRead = clientSocket.Receive(responseData);
-            }
-
-            return responseString;
-        }
-
-        private string PostDataUsingSocket(string url, string content, bool isFormSubmission = false, CookieContainer cookieContainer = null)
-        {
-            // Add a random element to the url, this is a shit hack but the only thing that will work!
-            url = url.Replace("%RAND%", DateTime.Now.Ticks.ToString());
-
-            // Structured uri to be able to extract components
-            var uri = new Uri(url);
-
-            // Create the socket and connect it
-            var clientSocket = ConnectSocket(uri);
-            if (clientSocket == null || !clientSocket.Connected)
-                return null;
-
-            try
-            {
-                return PerformPost(uri, clientSocket, cookieContainer, content, isFormSubmission)?.ToString();
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-            finally
-            {
-                clientSocket.Close();
-                clientSocket.Dispose();
-            }
         }
 
         private T ReadJsonFromResponse<T>(HttpWebResponse response)
@@ -347,28 +302,28 @@ namespace Orange.Livebox
                 return JsonConvert.DeserializeObject<T>(rawReplyData);
             }
         }
-        
+
         private static CookieCollection GetAllCookies(CookieContainer cookieJar, string scheme = "https")
         {
             var cookieCollection = new CookieCollection();
 
-            Hashtable table = (Hashtable)cookieJar.GetType().InvokeMember("m_domainTable",
-                                                                          BindingFlags.NonPublic | BindingFlags.GetField | BindingFlags.Instance,
-                                                                          null, cookieJar, new object[] { });
+            Hashtable table = (Hashtable) cookieJar.GetType().InvokeMember("m_domainTable",
+                BindingFlags.NonPublic | BindingFlags.GetField | BindingFlags.Instance,
+                null, cookieJar, new object[] {});
             foreach (string rawKey in table.Keys)
             {
                 // Skip dots in the beginning, the key value is the domain name for the cookies
                 var key = rawKey.TrimStart('.');
 
                 // Invoke the private function to get the list of cookies
-                var list = (SortedList)table[rawKey].GetType().InvokeMember("m_list",
-                                                                            BindingFlags.NonPublic | BindingFlags.GetField | BindingFlags.Instance,
-                                                                            null,
-                                                                            table[key],
-                                                                            new object[] { });
+                var list = (SortedList) table[rawKey].GetType().InvokeMember("m_list",
+                    BindingFlags.NonPublic | BindingFlags.GetField | BindingFlags.Instance,
+                    null,
+                    table[key],
+                    new object[] {});
 
                 foreach (var uri in list.Keys.Cast<string>()
-                                             .Select(listkey => new Uri(scheme + "://" + key + listkey)))
+                    .Select(listkey => new Uri(scheme + "://" + key + listkey)))
                 {
                     cookieCollection.Add(cookieJar.GetCookies(uri));
                 }
@@ -376,5 +331,8 @@ namespace Orange.Livebox
 
             return cookieCollection;
         }
+
+        #endregion
+
     }
 }

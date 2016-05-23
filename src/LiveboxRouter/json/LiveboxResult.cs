@@ -10,7 +10,7 @@ namespace Orange.Livebox.json
     [JsonObject(MemberSerialization.OptIn)]
     public abstract class LiveboxResult<TStatus>
     {
-        [JsonProperty("status")] public TStatus Success { get; set; }
+        [JsonProperty("status")] public TStatus Status { get; set; }
         [JsonProperty("errors")] public Error[] Errors { get; set; }
     }
 

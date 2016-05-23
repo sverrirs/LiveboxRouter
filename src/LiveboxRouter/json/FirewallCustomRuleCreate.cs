@@ -8,14 +8,10 @@ using Newtonsoft.Json;
 namespace Orange.Livebox.json
 {
     [JsonObject(MemberSerialization.OptIn)]
-    public class FirewallCustomRule
+    public class FirewallCustomRuleCreate
     {
-        public static string ProtocolTCP = "6";
-        public static string ProtocolUDP = "17";
-        public static string ProtocolBoth = ProtocolTCP + "," + ProtocolUDP;
-
         [JsonProperty("id")]
-        public string Id { get; set; }
+        public string Name { get; set; }
 
         [JsonProperty("action")]
         public string Action { get; set; }
@@ -50,9 +46,7 @@ namespace Orange.Livebox.json
         [JsonProperty("persistent")]
         public bool Persistent { get; set; }
 
-    //{"parameters":{"id":"BLOCK","action":"Drop","destinationPort":"","destinationPrefix":"","sourcePort":"","sourcePrefix":"8.8.4.4","description":"BLOCK","protocol":"6,17","ipversion":4,"enable":false,"chain":"Custom","persistent":true}}
-
-        public FirewallCustomRule()
+        public FirewallCustomRuleCreate()
         {
             Chain = "Custom";
             Persistent = true;

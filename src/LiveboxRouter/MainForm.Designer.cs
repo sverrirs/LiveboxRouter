@@ -37,6 +37,8 @@
             this.tbUsername = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
             this.tbPassword = new System.Windows.Forms.TextBox();
+            this.btnGetFirewallCustomRules = new System.Windows.Forms.Button();
+            this.btnGetDeviceInfo = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // btnClearFirewallBlock
@@ -61,16 +63,20 @@
             // 
             // tbResults
             // 
-            this.tbResults.Location = new System.Drawing.Point(25, 228);
+            this.tbResults.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.tbResults.Location = new System.Drawing.Point(12, 187);
             this.tbResults.Multiline = true;
             this.tbResults.Name = "tbResults";
-            this.tbResults.Size = new System.Drawing.Size(470, 292);
+            this.tbResults.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+            this.tbResults.Size = new System.Drawing.Size(704, 357);
             this.tbResults.TabIndex = 14;
             this.tbResults.TabStop = false;
             // 
             // btnGetWANStatus
             // 
-            this.btnGetWANStatus.Location = new System.Drawing.Point(306, 76);
+            this.btnGetWANStatus.Location = new System.Drawing.Point(236, 76);
             this.btnGetWANStatus.Name = "btnGetWANStatus";
             this.btnGetWANStatus.Size = new System.Drawing.Size(169, 38);
             this.btnGetWANStatus.TabIndex = 12;
@@ -110,11 +116,33 @@
             this.tbPassword.Size = new System.Drawing.Size(191, 20);
             this.tbPassword.TabIndex = 1;
             // 
+            // btnGetFirewallCustomRules
+            // 
+            this.btnGetFirewallCustomRules.Location = new System.Drawing.Point(236, 143);
+            this.btnGetFirewallCustomRules.Name = "btnGetFirewallCustomRules";
+            this.btnGetFirewallCustomRules.Size = new System.Drawing.Size(169, 38);
+            this.btnGetFirewallCustomRules.TabIndex = 15;
+            this.btnGetFirewallCustomRules.Text = "Get Firewall Rules";
+            this.btnGetFirewallCustomRules.UseVisualStyleBackColor = true;
+            this.btnGetFirewallCustomRules.Click += new System.EventHandler(this.btnGetFirewallCustomRules_Click);
+            // 
+            // btnGetDeviceInfo
+            // 
+            this.btnGetDeviceInfo.Location = new System.Drawing.Point(424, 76);
+            this.btnGetDeviceInfo.Name = "btnGetDeviceInfo";
+            this.btnGetDeviceInfo.Size = new System.Drawing.Size(181, 38);
+            this.btnGetDeviceInfo.TabIndex = 16;
+            this.btnGetDeviceInfo.Text = "Get Device Info";
+            this.btnGetDeviceInfo.UseVisualStyleBackColor = true;
+            this.btnGetDeviceInfo.Click += new System.EventHandler(this.btnGetDeviceInfo_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(539, 556);
+            this.ClientSize = new System.Drawing.Size(728, 556);
+            this.Controls.Add(this.btnGetDeviceInfo);
+            this.Controls.Add(this.btnGetFirewallCustomRules);
             this.Controls.Add(this.tbPassword);
             this.Controls.Add(this.tbUsername);
             this.Controls.Add(this.label2);
@@ -141,6 +169,8 @@
         private System.Windows.Forms.TextBox tbUsername;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.TextBox tbPassword;
+        private System.Windows.Forms.Button btnGetFirewallCustomRules;
+        private System.Windows.Forms.Button btnGetDeviceInfo;
     }
 }
 

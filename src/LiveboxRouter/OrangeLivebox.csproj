@@ -57,7 +57,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="json\FirewallCustomRule.cs" />
+    <Compile Include="json\DeviceInfoResult.cs" />
+    <Compile Include="json\FirewallRuleResults.cs" />
+    <Compile Include="json\FirewallCustomRuleCreate.cs" />
     <Compile Include="json\LiveboxResult.cs" />
     <Compile Include="json\LoginResult.cs" />
     <Compile Include="json\SimpleResult.cs" />
