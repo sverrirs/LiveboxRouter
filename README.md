@@ -1,4 +1,4 @@
-<center><img src="https://raw.githubusercontent.com/sverrirs/LiveboxRouter/master/src/LiveboxRouter/img/livebox_icon.png" width=128" /></center>
+<center><img src="https://raw.githubusercontent.com/sverrirs/LiveboxRouter/master/src/LiveboxRouter/img/livebox-play.png" /></center>
 
 # LiveboxRouter
 Provides a .NET library functions to connect to and control a Livebox 3 router from Sagemcom. This router is used for internet services offered by Orange in France, UK, Spain, Netherlands, Switzerland, Poland and other countries.
