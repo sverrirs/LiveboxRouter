@@ -7,10 +7,6 @@ Provides a .NET library functions to connect to and control a Livebox 3 router f
 
 <a href="https://en.wikipedia.org/wiki/Orange_Livebox" target="_blank">Wikipedia</a>
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/sverrirs/LiveboxRouter/master/src/LiveboxRouter/img/livebox_icon.png" width="200" />
-</p>
-
 # Features
 The library is in its early stages and built simply so that I could automate Firewall tasks when using DNS blocking services such as Unlocator.
 The following features have been implemented:
@@ -22,3 +18,44 @@ The following features have been implemented:
 
 Todo:
 * Set Firewall custom rules (create new IP blocking rules)
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/sverrirs/LiveboxRouter/master/src/LiveboxRouter/img/livebox_icon.png" width="200" />
+</p>
+
+# Examples
+To obtain information about the device
+
+``` csharp
+LiveboxAdapter a = new LiveboxAdapter(username, password);
+a.LoginAsync().OnSuccess((t, o) =>
+{
+  a.GetDeviceInfo().OnSuccess((t2, o2) =>
+  {
+    var res = t2.Result;
+    // the res object is a typed device info object
+  }
+});
+```
+
+Setting the firewall level to **medium**
+
+``` csharp
+LiveboxAdapter a = new LiveboxAdapter(username, password);
+a.LoginAsync().OnSuccess((t, o) =>
+{
+  a.SetFirewallToMedium().OnSuccess((t2, o2) =>
+  {
+      var res = t2.Result;
+      if (!res.Status.GetValueOrDefault())
+      {
+          textbox.Text = "Error: " + res.Errors.First().Description;
+      }
+      else
+      {
+          textbox.Text = "Success: " + res.Status;
+      }
+  }, _uiScheduler);
+});
+```
+
