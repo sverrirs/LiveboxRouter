@@ -19,10 +19,6 @@ The following features have been implemented:
 Todo:
 * Set Firewall custom rules (create new IP blocking rules)
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/sverrirs/LiveboxRouter/master/src/LiveboxRouter/img/livebox_icon.png" width="200" />
-</p>
-
 # Examples
 To obtain information about the device
 
@@ -58,4 +54,8 @@ a.LoginAsync().OnSuccess((t, o) =>
   }, _uiScheduler);
 });
 ```
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/sverrirs/LiveboxRouter/master/src/LiveboxRouter/img/livebox_icon.png" width="200" />
+</p>
 
