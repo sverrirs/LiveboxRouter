@@ -5,6 +5,7 @@ using System.Data;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -246,7 +247,7 @@ namespace Orange.Livebox
                         StringBuilder sb = new StringBuilder();
                         foreach (var rule in res)
                         {
-                            sb.AppendLine(rule.Name + " [" + rule.Enable +"]: " + rule.Target + " Protocol={"+rule.Protocol+"}");
+                            sb.AppendLine(rule.Id + " [" + rule.Enable +"]: " + rule.Target + " Protocol={"+rule.Protocol+"}");
                         }
                         Log(sb.ToString());
                     }
@@ -282,12 +283,15 @@ namespace Orange.Livebox
 
         private void btnFirewallBlockEnable_Click(object sender, EventArgs e)
         {
-            Log("Enabling Firewall Block");
+            Log("Loading firewall rules from file 'ipblock.csv'");
+            var rules = ReadFirewallRules();
+            Log(rules.Length + " rules found");
 
+            Log("Enabling Firewall Block");
             LiveboxAdapter a = CreateLiveboxAdapter();
             a.LoginAsync().OnSuccess((t, o) =>
             {
-                a.SetFirewallToCustom().OnSuccess((t2, o2) =>
+                a.SetFirewallToCustom(rules).OnSuccess((t2, o2) =>
                 {
                     var res = t2.Result;
                     if (!res.Status.GetValueOrDefault())
@@ -303,6 +307,23 @@ namespace Orange.Livebox
                     a.GetFirewallLevel().OnSuccess(GetFirewallLevelSuccessHandler(), _uiScheduler);
                 });
             });
+        }
+
+        private FirewallRuleInstruction[] ReadFirewallRules()
+        {
+            return new[]
+            {
+                FirewallRuleInstruction.CreateBlock("AUTO01", IPAddress.Parse("8.8.4.4"), IPAddress.Parse("255.255.255.255")),
+                FirewallRuleInstruction.CreateBlock("AUTO02", IPAddress.Parse("8.8.8.8"), IPAddress.Parse("255.255.255.255")),
+                FirewallRuleInstruction.CreateBlock("AUTO03", IPAddress.Parse("23.246.0.0"), IPAddress.Parse("255.255.0.0")),
+                FirewallRuleInstruction.CreateBlock("AUTO04", IPAddress.Parse("37.77.184.0"), IPAddress.Parse("255.255.255.0")),
+                FirewallRuleInstruction.CreateBlock("AUTO05", IPAddress.Parse("45.57.0.0"), IPAddress.Parse("255.255.0.0")),
+                //This block might create issues with local Netflix version. Only add if nothing else works.
+                FirewallRuleInstruction.CreateBlock("AUTO06", IPAddress.Parse("108.175.0.0"), IPAddress.Parse("255.255.0.0")),
+                FirewallRuleInstruction.CreateBlock("AUTO07", IPAddress.Parse("185.2.0.0"), IPAddress.Parse("255.255.0.0")),
+                FirewallRuleInstruction.CreateBlock("AUTO08", IPAddress.Parse("198.38.0.0"), IPAddress.Parse("255.255.0.0")),
+                FirewallRuleInstruction.CreateBlock("AUTO09", IPAddress.Parse("198.45.48.0"), IPAddress.Parse("255.255.255.0")),
+            };
         }
 
         private void btnFirewallBlockDisable_Click(object sender, EventArgs e)

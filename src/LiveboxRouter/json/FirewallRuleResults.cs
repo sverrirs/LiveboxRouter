@@ -19,7 +19,7 @@ namespace Orange.Livebox.json
         public static string ProtocolUDP = "17";
         public static string ProtocolBoth = ProtocolTCP + "," + ProtocolUDP;
 
-        [JsonProperty("Id")] public string Name { get; set; }
+        [JsonProperty("Id")] public string Id { get; set; }
         [JsonProperty("Target")] public string Target { get; set; }
         [JsonProperty("Status")] public string Status { get; set; }
         [JsonProperty("Class")] public string Class { get; set; }
@@ -35,23 +35,5 @@ namespace Orange.Livebox.json
         [JsonProperty("Description")] public string Description { get; set; }
         [JsonProperty("Time")] public string Time { get; set; }
         [JsonProperty("Enable")] public bool Enable { get; set; }
-        /*
-        "Id": "HTTP",
-        "Target": "Accept",
-        "Status": "Enabled",
-        "Class": "Forward",
-        "IPVersion": 4,
-        "Protocol": "6",
-        "DestinationPort": "80",
-        "SourcePort": "",
-        "DestinationMACAddress": "",
-        "SourceMACAddress": "",
-        "DestinationPrefix": "",
-        "SourcePrefix": "",
-        "TargetChain": "",
-        "Description": "",
-        "Time": "0 sec, 0 usec",
-        "Enable": true
-            */
     }
 }

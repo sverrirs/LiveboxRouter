@@ -159,15 +159,15 @@ namespace Orange.Livebox
 
         public Task<SimpleResult> SetFirewallToMedium()
         {
-            return Task.FromResult(SetFirewallLevel("Medium"));
+            return Task.FromResult(CoreSetFirewallLevel("Medium"));
         }
 
-        public Task<SimpleResult> SetFirewallToCustom()
+        public Task<SimpleResult> SetFirewallToCustom(FirewallRuleInstruction[] rules = null)
         {
-            return Task.FromResult(SetFirewallLevel("Custom"));
+            return Task.FromResult(CoreSetFirewallLevel("Custom", rules));
         }
 
-        private SimpleResult SetFirewallLevel(string level)
+        private SimpleResult CoreSetFirewallLevel(string level, FirewallRuleInstruction[] rules = null)
         {
             try
             {
@@ -181,17 +181,87 @@ namespace Orange.Livebox
                     //throw new ArgumentException("Could not set firewall ipv6 level, aborting");
                 }
 
+                SimpleResult returnResult = null;
                 var uriIp4 = new Uri(Origin + "/sysbus/Firewall:setFirewallLevel");
                 var requestIp4 = CreateRequest(uriIp4, "{\"parameters\":{\"level\":\"" + level + "\"}}");
                 using (var response = (HttpWebResponse) requestIp4.GetResponse())
                 {
-                    return ReadJsonFromResponse<SimpleResult>(response);
+                    returnResult = ReadJsonFromResponse<SimpleResult>(response);
                 }
+
+                // Ensure that the appropriate blocking rules are available in 
+                // the router's custom firewall rules if they're supplied
+                if (rules != null && rules.Length > 0)
+                {
+                    foreach (var rule in rules)
+                    {
+                        try
+                        {
+                            var ruleResult = CreateSingleFirewallRule(rule);
+                            if (ruleResult.Status != rule.Id)
+                            {
+                                returnResult.Errors = (returnResult.Errors??new Error[0]).Concat(new[]
+                                {
+                                    new Error
+                                    {
+                                        Description = "Could not create firewall rule '" + rule.Id + "'",
+                                    }
+                                }).Concat(ruleResult.Errors ?? new Error[0]).ToArray();
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            returnResult.Errors = (returnResult.Errors ?? new Error[0]).Concat(new[]
+                            {
+                                new Error
+                                {
+                                    Description = "Could not create firewall rule '" + rule.Id + "'",
+                                    Info = ex.Message
+                                }
+                            }).ToArray();
+                        }
+                    }
+                    // Finally commit all the rules
+                    var commitResult = CommitFirewallRules();
+                    if (!commitResult.Status.GetValueOrDefault())
+                    {
+                        returnResult.Errors = (returnResult.Errors ?? new Error[0]).Concat(new[]
+                            {
+                                new Error
+                                {
+                                    Description = "Could not commit firewall rules",
+                                }
+                            }).Concat(commitResult.Errors ?? new Error[0]).ToArray();
+                    }
+                }
+
+                // Return the final result
+                return returnResult;
             }
             catch (Exception ex)
             {
                 Debug.Print(ex.ToString());
                 throw;
+            }
+        }
+
+        private FirewallRuleCreateResult CreateSingleFirewallRule(FirewallRuleInstruction rule)
+        {
+            var uri = new Uri(Origin + "/sysbus/Firewall:setCustomRule");
+            var request = CreateRequest(uri, "{\"parameters\": " + JsonConvert.SerializeObject(rule, Formatting.None) + "}");
+            using (var response = (HttpWebResponse)request.GetResponse())
+            {
+                return ReadJsonFromResponse<FirewallRuleCreateResult>(response);
+            }
+        }
+
+        private SimpleResult CommitFirewallRules()
+        {
+            var uri = new Uri(Origin + "/sysbus/Firewall:commit");
+            var request = CreateRequest(uri, "{\"parameters\":{}}");
+            using (var response = (HttpWebResponse)request.GetResponse())
+            {
+                return ReadJsonFromResponse<SimpleResult>(response);
             }
         }
 
@@ -225,6 +295,21 @@ namespace Orange.Livebox
                 throw;
             }
         }
+
+        /*/// <summary>
+        /// Send a set of new firewall rules to the router's firewall
+        /// </summary>
+        /// <param name="firewallRuleInstructions"></param>
+        /// <returns></returns>
+        public Task<FirewallRuleCreateResult> SetFirewallCustomRules(FirewallRuleInstruction[] firewallRuleInstructions)
+        {
+            return Task.FromResult(CoreSetFirewallCustomRules(firewallRuleInstructions));
+        }
+
+        private FirewallRuleCreateResult CoreSetFirewallCustomRules(FirewallRuleInstruction[] rules)
+        {
+            
+        }*/
 
         #endregion
 
@@ -356,6 +441,5 @@ namespace Orange.Livebox
         }
 
         #endregion
-
     }
 }
