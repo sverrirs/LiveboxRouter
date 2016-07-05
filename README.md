@@ -7,6 +7,10 @@ Provides a .NET library functions to connect to and control a Livebox 3 router f
 
 <a href="https://en.wikipedia.org/wiki/Orange_Livebox" target="_blank">Wikipedia</a>
 
+<p align="center">
+  <a href="https://www.paypal.me/sverrirs/1.5" target="_blank"><img border="0" src="https://www.paypalobjects.com/en_US/i/btn/x-click-but21.gif" alt="Like my work? You can donate to this project using PayPal" title="Like my work? You can donate to this project using PayPal"></a>
+</p>
+
 # Features
 The library is in its early stages and built simply so that I could automate Firewall tasks when using DNS blocking services such as Unlocator.
 The following features have been implemented:
